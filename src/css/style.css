@@ -1,0 +1,9 @@
+body { background: #000; color: #ff6b35; font-family: Arial; }
+h1 { text-shadow: 0 0 20px #ff6b35; }
+button { background: #ff6b35; border-radius: 8px; transition: all 0.3s; }
+button:hover { transform: scale(1.05); }
+#result { background: rgba(255,107,53,0.1); border-radius: 8px; }
+.plus-btn { background: #ff6b35; border-radius: 50%; }
+.send-btn { background: #ff6b35; border-radius: 50%; }
+.support { background: #ff6b35; border-radius: 50px; text-decoration: none; }
+.footer { color: #666; }
