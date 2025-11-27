@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Кухня mrlOnsf — Презентации!</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Библиотека для создания PPTX прямо в браузере -->
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <style>
+    body {font-family:Arial;background:#0f0f1a;color:#fff;margin:0;padding:20px;text-align:center;background:linear-gradient(135deg,#0f0f1a,#1a0b2e);}
+    h1 {color:#ff6b35;text-shadow:0 0 20px #ff6b35aa;animation:glow 2s infinite alternate;}
+    input {width:90%;max-width:340px;padding:16px;margin:20px 0;border-radius:16px;border:2px solid #ff6b35;background:#111;color:#fff;font-size:18px;}
+    button {background:linear-gradient(45deg,#ff6b35,#ff9500);color:#fff;padding:16px 28px;margin:8px;border-radius:16px;font-size:18px;cursor:pointer;min-width:180px;box-shadow:0 5px 20px #ff6b3588;animation:pulseBtn 2s infinite;}
+    button:hover {transform:translateY(-5px) scale(1.05);}
+    #result {margin-top:30px;padding:25px;background:rgba(20,20,40,0.8);border-radius:20px;display:none;animation:slideUp 0.8s;}
+    .loading {animation:pulse 1.5s infinite;color:#ff6b35;font-size:20px;}
+    @keyframes glow {from{text-shadow:0 0 10px #ff6b35;}to{text-shadow:0 0 30px #ff6b35,0 0 40px #ff9500;}}
+    @keyframes pulseBtn {0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+    @keyframes slideUp {from{opacity:0;transform:translateY(50px);}to{opacity:1;transform:none;}}
+    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.5}}
+  </style>
+</head>
+<body>
+  <h1>Кухня mrlOnsf — Презентации!</h1>
+  <p>Введи тему и количество слайдов (например: Космос 10 слайдов)</p>
+
+  <input type="text" id="query" placeholder="Космос 10 слайдов" autofocus>
+
+  <div style="margin:30px 0;">
+    <button onclick="makeRealPresentation()">Создать PPTX презентацию</button>
+  </div>
+
+  <div id="result">
+    <p class="loading">Генерируем презентацию...</p>
+  </div>
+
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    function show(html) {
+      document.getElementById('result').innerHTML = html;
+      document.getElementById('result').style.display = 'block';
+    }
+
+    async function makeRealPresentation() {
+      const input = document.getElementById('query').value || "Моя презентация 8 слайдов";
+      const parts = input.trim().split(" ");
+      let slidesCount = 8;
+      let theme = "Моя тема";
+
+      // Парсим количество слайдов
+      const num = parseInt(parts[parts.length-2]);
+      if (!isNaN(num) && num > 0 && num < 30) {
+        slidesCount = num;
+        theme = parts.slice(0, -2).join(" ");
+      } else {
+        theme = input;
+      }
+
+      show(`<p class="loading">Создаю презентацию «${theme}» — ${slidesCount} слайдов...</p>`);
+
+      const pptx = new PptxGenJS();
+      pptx.defineLayout({ name: "A4", width: 10, height: 5.63 });
+
+      // Титульный слайд
+      let slide = pptx.addSlide();
+      slide.addText("Презентация", { x: 0.5, y: 1.5, fontSize: 44, color: "ff6b35", bold: true, align: "center" });
+      slide.addText(theme, { x: 0.5, y: 2.5, fontSize: 36, color: "ffffff", align: "center" });
+
+      // Остальные слайды
+      for (let i = 1; i < slidesCount; i++) {
+        slide = pptx.addSlide();
+        slide.addText(`Слайд ${i+1}`, { x: 0.5, y: 0.3, fontSize: 32, color: "ff6b35", bold: true });
+        slide.addText(`• Пункт первый\n• Пункт второй\n• Пункт третий\n• И ещё один`, 
+          { x: 0.6, y: 1.2, fontSize: 24, color: "ffffff", bullet: true });
+      }
+
+      // Финальный слайд
+      slide = pptx.addSlide();
+      slide.addText("Спасибо за внимание!", { x: 0.5, y: 1.8, fontSize: 40, color: "ff6b35", bold: true, align: "center" });
+      slide.addText("Создано в mrlOnsf", { x: 0.5, y: 3, fontSize: 24, color: "aaaaaa", align: "center" });
+
+      // Скачивание
+      pptx.writeFile({ fileName: `${theme.replace(/[^а-яА-Я0-9]/g, "_")}.pptx` });
+
+      setTimeout(() => {
+        show(`<h3 style="color:#ff6b35;">Готово! 🎉</h3><p>Файл скачивается автоматически!</p>`);
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
