@@ -1,108 +1,250 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Кухня mrlOnsf</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {font-family: Arial, sans-serif;background:#0f0f0f;color:#fff;margin:0;padding:20px;text-align:center;}
-    h1 {color:#ff6b35;}
-    input {width:90%;max-width:340px;padding:14px;margin:15px 0;border-radius:12px;border:none;background:#222;color:#fff;font-size:16px;}
-    button {background:#ff6b35;color:#fff;border:none;padding:14px 20px;margin:6px;border-radius:12px;font-size:16px;cursor:pointer;min-width:140px;}
-    button:active {transform:scale(0.95);}
-    #result {margin-top:25px;padding:20px;background:#1a1a1a;border-radius:12px;display:none;animation:fadeIn 0.5s;}
-    #generatedImage {max-width:100%;border-radius:12px;margin-top:15px;box-shadow:0 4px 20px rgba(255,107,53,0.4);}
-    .loading {animation:pulse 1.5s infinite;color:#ff6b35;}
-    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.5}}
-    @keyframes fadeIn {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кухня mrlOnsf 🚀</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #1a1a1a; 
+            color: white; 
+            padding: 20px; 
+            margin: 0; 
+            text-align: center; 
+        }
+        h1 { color: #ff9500; }
+        button { 
+            background: #0088cc; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            margin: 5px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: background 0.3s; 
+            display: inline-block; 
+        }
+        button:hover { background: #007acc; }
+        input { 
+            padding: 12px; 
+            width: 80%; 
+            max-width: 300px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border: 1px solid #333; 
+            background: #333; 
+            color: white; 
+        }
+        #result { 
+            margin-top: 20px; 
+            padding: 20px; 
+            background: #333; 
+            border-radius: 8px; 
+            text-align: left; 
+            min-height: 100px; 
+            display: none; 
+            animation: fadeIn 0.5s ease-in; 
+        }
+        #generatedImage { 
+            max-width: 100%; 
+            border-radius: 8px; 
+            margin-top: 10px; 
+        }
+        .loading { animation: pulse 1.5s infinite; color: #ff9500; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        a { color: #ff9500; text-decoration: none; }
+    </style>
 </head>
 <body>
-  <h1>Кухня mrlOnsf</h1>
-  <p>Введи запрос и выбери действие</p>
+    <h1>Кухня mrlOnsf 🚀</h1>
+    <p>Вбей запрос и жми кнопку — результат внизу!</p>
+    
+    <input type="text" id="query" placeholder="Например: кот в космосе или 2+2*5">
+    <br>
+    
+    <button onclick="generateRecipe()">🍳 Рецепт с калориями</button>
+    <button onclick="generateImage()">🖼️ Генерация картинки</button>
+    <button onclick="googleSearch()">🔍 Поиск в Google</button>
+    <button onclick="solveMath()">🧮 Математика</button>
+    <button onclick="makePresentation()">📊 Презентация</button>
+    
+    <div id="result">
+        <p class="loading" id="loadingText">Загрузка...</p>
+        <img id="generatedImage" src="" alt="Картинка" style="display: none;">
+    </div>
 
-  <input type="text" id="query" placeholder="кот в космосе / рецепт пасты / 2+2*5">
+    <script>
+        // Инициализация Telegram Mini App
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
 
-  <div>
-    <button onclick="generateImage()">Картинка</button>
-    <button onclick="generateRecipe()">Рецепт + ккал</button>
-    <button onclick="googleSearch()">Поиск Google</button>
-    <button onclick="solveMath()">Математика</button>
-    <button onclick="makePresentation()">Презентация</button>
-  </div>
+        // Оптимизация: Проверка производительности устройства (из Telegram SDK)
+        const ua = navigator.userAgent;
+        const performanceClass = ua.match(/LOW|AVERAGE|HIGH/) ? ua.match(/LOW|AVERAGE|HIGH/)[0] : 'HIGH';
+        if (performanceClass === 'LOW') {
+            document.querySelectorAll('.loading, #result').forEach(el => el.style.animation = 'none'); // Отключаем анимации на слабых девайсах
+        }
 
-  <div id="result">
-    <p class="loading" id="loading">Генерируем...</p>
-    <img id="generatedImage" src="" style="display:none;">
-  </div>
+        // Ключи
+        const TAVILY_KEY = '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';
+        const HF_TOKEN = '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';
 
-  <script>
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
+        // Кэширование (localStorage для ускорения)
+        function getCache(key) {
+            return localStorage.getItem(key);
+        }
+        function setCache(key, value) {
+            localStorage.setItem(key, value);
+        }
 
-    const TAVILY_KEY = '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';
-    const HF_TOKEN   = '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';
+        function showResult(html) {
+            const result = document.getElementById('result');
+            result.innerHTML = html;
+            result.style.display = 'block';
+            document.getElementById('loadingText').style.display = 'none';
+        }
 
-    function show(html = '') {
-      document.getElementById('result').innerHTML = '<p class="loading">Генерируем...</p>' + html;
-      document.getElementById('result').style.display = 'block';
-    }
+        // 1. Рецепт (ускорено: короткий промпт, кэш)
+        async function generateRecipe() {
+            const query = document.getElementById('query').value || 'ужин';
+            const cacheKey = `recipe_${query}`;
+            const cached = getCache(cacheKey);
+            if (cached) {
+                showResult(`<h3>Рецепт: ${query}</h3><p>${cached}</p>`);
+                return;
+            }
+            showResult('<p class="loading">Генерирую рецепт...</p>');
+            try {
+                const res = await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-32B-Instruct', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        inputs: `Короткий рецепт ${query}: ингредиенты, шаги, калории.`, 
+                        parameters: { max_new_tokens: 300, temperature: 0.7 } 
+                    })
+                });
+                const data = await res.json();
+                const text = data[0]?.generated_text || 'Готово! 😋';
+                setCache(cacheKey, text);
+                showResult(`<h3>Рецепт: ${query}</h3><p>${text}</p>`);
+            } catch {
+                showResult('<p>Ошибка. Попробуй позже! 😅</p>');
+            }
+        }
 
-    async function generateImage() {
-      const prompt = document.getElementById('query').value || 'кот в космосе';
-      show();
-      try {
-        const r = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell', {
-          method:'POST', headers:{'Authorization':`Bearer ${HF_TOKEN}`},
-          body:JSON.stringify({inputs:prompt})
-        });
-        const blob = await r.blob();
-        const url = URL.createObjectURL(blob);
-        document.getElementById('generatedImage').src = url;
-        document.getElementById('generatedImage').style.display = 'block';
-        document.getElementById('result').innerHTML = `<h3>Готово: ${prompt}</h3>`;
-      } catch { show('<p>Ошибка генерации</p>'); }
-    }
+        // 2. Генерация картинки (ускорено: короткий промпт, blob)
+        async function generateImage() {
+            const prompt = document.getElementById('query').value || 'картинка';
+            const cacheKey = `image_${prompt}`;
+            const cached = getCache(cacheKey);
+            if (cached) {
+                document.getElementById('generatedImage').src = cached;
+                document.getElementById('generatedImage').style.display = 'block';
+                showResult(`<h3>Картинка: ${prompt}</h3><p>Из кэша! 🎨</p>`);
+                return;
+            }
+            showResult('<p class="loading">Генерирую картинку...</p>');
+            try {
+                const res = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${HF_TOKEN}` },
+                    body: JSON.stringify({ inputs: prompt, parameters: { num_inference_steps: 4 } }) // Ускоряем: меньше шагов
+                });
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                setCache(cacheKey, url); // Кэш URL
+                document.getElementById('generatedImage').src = url;
+                document.getElementById('generatedImage').style.display = 'block';
+                showResult(`<h3>Картинка: ${prompt}</h3><p>Готово! 🎨</p>`);
+            } catch {
+                showResult('<p>Не сгенерировал. Опиши проще! 😔</p>');
+            }
+        }
 
-    async function generateRecipe() {
-      const q = document.getElementById('query').value || 'ужин';
-      show();
-      const r = await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-32B-Instruct', {
-        method:'POST', headers:{'Authorization':`Bearer ${HF_TOKEN}`,'Content-Type':'application/json'},
-        body:JSON.stringify({inputs:`Простой рецепт: ${q}. Ингредиенты с граммами, шаги, калории на порцию. Живой язык.`})
-      });
-      const d = await r.json();
-      show(`<pre style="text-align:left">${d[0]?.generated_text || 'Готово!'}</pre>`);
-    }
+        // 3. Поиск в Google (уже работает — оставляем, добавили кэш)
+        async function googleSearch() {
+            const query = document.getElementById('query').value || 'информация';
+            const cacheKey = `search_${query}`;
+            const cached = getCache(cacheKey);
+            if (cached) {
+                showResult(cached);
+                return;
+            }
+            showResult('<p class="loading">Ищу в Google...</p>');
+            try {
+                const res = await fetch('https://api.tavily.com/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: TAVILY_KEY, query, search_depth: 'basic', include_answer: true, max_results: 3 })
+                });
+                const data = await res.json();
+                let answer = data.answer || data.results?.map(r => `<p><strong>${r.title}</strong><br>${r.content.substring(0, 200)}...<br><a href="${r.url}" target="_blank">Источник</a></p>`).join('') || 'Не нашёл. Перефразируй! 🔍';
+                setCache(cacheKey, `<h3>Поиск: ${query}</h3>${answer}`);
+                showResult(`<h3>Поиск: ${query}</h3>${answer}`);
+            } catch {
+                showResult('<p>Поиск не сработал. Проверь интернет! 🌐</p>');
+            }
+        }
 
-    async function googleSearch() {
-      const q = document.getElementById('query').value || 'что-то';
-      show();
-      const r = await fetch('https://api.tavily.com/search', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({api_key:TAVILY_KEY, query:q, include_answer:true, max_results:3})
-      });
-      const d = await r.json();
-      const txt = d.answer || d.results.map(x=>`<p><b>${x.title}</b><br>${x.content}<br><a href="${x.url}">Источник</a></p>`).join('');
-      show(txt || 'Ничего не нашёл');
-    }
+        // 4. Математика (ускорено: lazy-load math.js)
+        async function solveMath() {
+            const query = document.getElementById('query').value || '2+2';
+            showResult('<p class="loading">Решая...</p>');
+            const cacheKey = `math_${query}`;
+            const cached = getCache(cacheKey);
+            if (cached) {
+                showResult(cached);
+                return;
+            }
+            // Lazy-load math.js только при первом клике
+            if (!window.math) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.min.js'; // CDN для скорости
+                document.head.appendChild(script);
+                script.onload = () => {
+                    try {
+                        const result = window.math.evaluate(query);
+                        const html = `<h3>Математика: ${query}</h3><p>Ответ: ${result} 🧮</p>`;
+                        setCache(cacheKey, html);
+                        showResult(html);
+                    } catch {
+                        showResult('<p>Не решил. Простое уравнение? 😅</p>');
+                    }
+                };
+            } else {
+                try {
+                    const result = window.math.evaluate(query);
+                    const html = `<h3>Математика: ${query}</h3><p>Ответ: ${result} 🧮</p>`;
+                    setCache(cacheKey, html);
+                    showResult(html);
+                } catch {
+                    showResult('<p>Не решил. Простое уравнение? 😅</p>');
+                }
+            }
+        }
 
-    async function solveMath() {
-      const q = document.getElementById('query').value || '2+2';
-      show();
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.min.js';
-      script.onload = () => {
-        try { show(`<h3>Ответ:</h3><p style="font-size:24px">${math.evaluate(q)}</p>`); }
-        catch { show('<p>Не решил</p>'); }
-      };
-      document.head.appendChild(script);
-    }
+        // 5. Презентация (ускорено: симуляция с прогрессом, можно добавить реальный API)
+        async function makePresentation() {
+            const query = document.getElementById('query').value || 'тема';
+            showResult('<p class="loading">Делаю презентацию... (5 сек)</p>');
+            // Симуляция прогресса для ускорения ощущения
+            setTimeout(() => {
+                showResult(`<h3>Презентация: ${query}</h3><p>Готова! <button onclick="downloadPPT()" style="background:#ff9500;">Скачать PPTX</button> 📊</p>`);
+            }, 2000); // 2 сек — быстро
+        }
 
-    async function makePresentation() {
-      show('<p>Генерирую PPTX... (пока симуляция)</p><p>Готово! Скачать: <a href="#">презентация.pptx</a></p>');
-    }
-  </script>
+        function downloadPPT() {
+            // Симуляция скачивания (в реале генерируй файл)
+            const link = document.createElement('a');
+            link.href = '#';
+            link.download = 'презентация.pptx';
+            link.click();
+            alert('Скачиваю... (в демо-версии)');
+        }
+    </script>
 </body>
 </html>
