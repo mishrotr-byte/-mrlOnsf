@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Кухня mrlOnsf</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {font-family: Arial, sans-serif;background:#0f0f0f;color:#fff;margin:0;padding:20px;text-align:center;}
+    h1 {color:#ff6b35;}
+    input {width:90%;max-width:340px;padding:14px;margin:15px 0;border-radius:12px;border:none;background:#222;color:#fff;font-size:16px;}
+    button {background:#ff6b35;color:#fff;border:none;padding:14px 20px;margin:6px;border-radius:12px;font-size:16px;cursor:pointer;min-width:140px;}
+    button:active {transform:scale(0.95);}
+    #result {margin-top:25px;padding:20px;background:#1a1a1a;border-radius:12px;display:none;animation:fadeIn 0.5s;}
+    #generatedImage {max-width:100%;border-radius:12px;margin-top:15px;box-shadow:0 4px 20px rgba(255,107,53,0.4);}
+    .loading {animation:pulse 1.5s infinite;color:#ff6b35;}
+    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.5}}
+    @keyframes fadeIn {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  </style>
+</head>
+<body>
+  <h1>Кухня mrlOnsf</h1>
+  <p>Введи запрос и выбери действие</p>
+
+  <input type="text" id="query" placeholder="кот в космосе / рецепт пасты / 2+2*5">
+
+  <div>
+    <button onclick="generateImage()">Картинка</button>
+    <button onclick="generateRecipe()">Рецепт + ккал</button>
+    <button onclick="googleSearch()">Поиск Google</button>
+    <button onclick="solveMath()">Математика</button>
+    <button onclick="makePresentation()">Презентация</button>
+  </div>
+
+  <div id="result">
+    <p class="loading" id="loading">Генерируем...</p>
+    <img id="generatedImage" src="" style="display:none;">
+  </div>
+
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    const TAVILY_KEY = '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';
+    const HF_TOKEN   = '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';
+
+    function show(html = '') {
+      document.getElementById('result').innerHTML = '<p class="loading">Генерируем...</p>' + html;
+      document.getElementById('result').style.display = 'block';
+    }
+
+    async function generateImage() {
+      const prompt = document.getElementById('query').value || 'кот в космосе';
+      show();
+      try {
+        const r = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell', {
+          method:'POST', headers:{'Authorization':`Bearer ${HF_TOKEN}`},
+          body:JSON.stringify({inputs:prompt})
+        });
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        document.getElementById('generatedImage').src = url;
+        document.getElementById('generatedImage').style.display = 'block';
+        document.getElementById('result').innerHTML = `<h3>Готово: ${prompt}</h3>`;
+      } catch { show('<p>Ошибка генерации</p>'); }
+    }
+
+    async function generateRecipe() {
+      const q = document.getElementById('query').value || 'ужин';
+      show();
+      const r = await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-32B-Instruct', {
+        method:'POST', headers:{'Authorization':`Bearer ${HF_TOKEN}`,'Content-Type':'application/json'},
+        body:JSON.stringify({inputs:`Простой рецепт: ${q}. Ингредиенты с граммами, шаги, калории на порцию. Живой язык.`})
+      });
+      const d = await r.json();
+      show(`<pre style="text-align:left">${d[0]?.generated_text || 'Готово!'}</pre>`);
+    }
+
+    async function googleSearch() {
+      const q = document.getElementById('query').value || 'что-то';
+      show();
+      const r = await fetch('https://api.tavily.com/search', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({api_key:TAVILY_KEY, query:q, include_answer:true, max_results:3})
+      });
+      const d = await r.json();
+      const txt = d.answer || d.results.map(x=>`<p><b>${x.title}</b><br>${x.content}<br><a href="${x.url}">Источник</a></p>`).join('');
+      show(txt || 'Ничего не нашёл');
+    }
+
+    async function solveMath() {
+      const q = document.getElementById('query').value || '2+2';
+      show();
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.min.js';
+      script.onload = () => {
+        try { show(`<h3>Ответ:</h3><p style="font-size:24px">${math.evaluate(q)}</p>`); }
+        catch { show('<p>Не решил</p>'); }
+      };
+      document.head.appendChild(script);
+    }
+
+    async function makePresentation() {
+      show('<p>Генерирую PPTX... (пока симуляция)</p><p>Готово! Скачать: <a href="#">презентация.pptx</a></p>');
+    }
+  </script>
+</body>
+</html>
