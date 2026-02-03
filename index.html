@@ -3,93 +3,495 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>mrlOnsf Ultimate</title>
+  <title>NBN Message — Next Business Network</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
   <style>
-    body {margin:0;background:#000;color:#ff6b35;font-family:Arial;overflow:hidden;position:relative}
-    canvas {position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
-    .container {position:relative;z-index:2;padding:20px;text-align:center}
-    .logo {width:100px;height:100px;border-radius:50%;background:url('https://i.imgur.com/6z2Z3eE.png') center/cover;margin:20px auto;box-shadow:0 0 30px #ff6b35}
-    h1 {font-size:2.5em;text-shadow:0 0 20px #ff6b35}
-    .input-bar {display:flex;align-items:center;background:#111;border-radius:50px;padding:10px;margin:20px auto;max-width:420px;box-shadow:0 0 20px #ff6b3533}
-    .plus-btn {background:#ff6b35;color:#000;width:50px;height:50px;border-radius:50%;font-size:30px;cursor:pointer}
-    input {flex:1;background:transparent;border:none;color:#fff;font-size:18px;padding:0 15px;outline:none}
-    .send-btn {background:#ff6b35;color:#000;width:50px;height:50px;border-radius:50%;cursor:pointer;font-size:24px}
-    button {background:#ff6b35;color:#000;padding:14px 20px;margin:8px;border-radius:12px;border:none;font-weight:bold;cursor:pointer;transition:all 0.3s}
-    button:hover {transform:scale(1.05);box-shadow:0 0 20px #ff6b35}
-    #result {margin-top:20px;padding:20px;background:rgba(255,107,53,0.1);border-radius:16px}
-    .support {position:fixed;bottom:20px;right:20px;background:#ff6b35;color:#000;padding:12px 20px;border-radius:50px;text-decoration:none;font-weight:bold}
-    .footer {position:fixed;bottom:10px;left:50%;transform:translateX(-50%);color:#666;font-size:12px}
-    .menu {position:absolute;background:#111;border-radius:20px;padding:20px;box-shadow:0 0 30px #ff6b35;display:none;z-index:10;top:100px;left:50%;transform:translateX(-50%)}
+    :root {
+      --bg: #0c111b;
+      --panel: #111827;
+      --panel-2: #0f172a;
+      --accent: #2b8cff;
+      --accent-soft: rgba(43, 140, 255, 0.18);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: rgba(148, 163, 184, 0.18);
+      --shadow: 0 20px 60px rgba(15, 23, 42, 0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #1f2a44, #0b0f19 60%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before,
+    body::after {
+      content: "";
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(43, 140, 255, 0.35), transparent 70%);
+      top: -160px;
+      right: -140px;
+      filter: blur(10px);
+      z-index: 0;
+    }
+    body::after {
+      width: 420px;
+      height: 420px;
+      left: -180px;
+      bottom: -120px;
+      background: radial-gradient(circle, rgba(138, 91, 255, 0.35), transparent 70%);
+    }
+    .app-shell {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 0;
+      width: min(1200px, 96vw);
+      margin: 24px 0;
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+    .sidebar {
+      background: linear-gradient(180deg, #101826, #0c1322 60%);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border-right: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #2b8cff, #8a5bff);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(43, 140, 255, 0.4);
+    }
+    .brand h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+    .brand span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .search {
+      background: var(--panel-2);
+      border-radius: 14px;
+      padding: 12px 14px;
+      border: 1px solid transparent;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search input {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      outline: none;
+      width: 100%;
+    }
+    .chat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      max-height: 360px;
+    }
+    .chat-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--panel-2);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .chat-item.active {
+      background: var(--accent-soft);
+      border-color: rgba(43, 140, 255, 0.4);
+    }
+    .chat-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #22c55e);
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+    }
+    .chat-meta h3 {
+      margin: 0;
+      font-size: 14px;
+    }
+    .chat-meta p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .sidebar-actions {
+      margin-top: auto;
+      display: grid;
+      gap: 10px;
+    }
+    .primary-btn {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ghost-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+    .main {
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+    }
+    .header {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(10px);
+    }
+    .header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .header span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .messages {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0));
+    }
+    .date-pill {
+      align-self: center;
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .bubble {
+      max-width: 70%;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    .bubble.user .tag {
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .bubble.meta {
+      background: transparent;
+      color: var(--muted);
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      align-self: center;
+      text-align: center;
+    }
+    .composer {
+      padding: 20px 24px 24px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 12px;
+    }
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stat-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .stat-card strong {
+      display: block;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .composer-bar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      background: var(--panel-2);
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+    }
+    .composer input {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: none;
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .send-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .menu {
+      display: none;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .menu button {
+      background: rgba(148, 163, 184, 0.18);
+      border: none;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 960px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .chat-list {
+        max-height: none;
+      }
+    }
   </style>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
-  <div class="container">
-    <div class="logo"></div>
-    <h1>mrlOnsf Ultimate</h1>
-    <div class="input-bar">
-      <div class="plus-btn" onclick="toggleMenu()">+</div>
-      <input type="text" id="query" placeholder="Спроси что-нибудь...">
-      <div class="send-btn" onclick="googleSearch()">↑</div>
-    </div>
-    <div id="result"><p style="color:#ff6b35">Готовность: 100%</p></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">NBN</div>
+        <div>
+          <h1>NBN Message</h1>
+          <span>Next Business Network</span>
+        </div>
+      </div>
+      <label class="search">
+        🔍
+        <input type="text" placeholder="Поиск диалогов, людей, каналов" />
+      </label>
+      <section class="chat-list">
+        <div class="chat-item active">
+          <div class="chat-avatar">NB</div>
+          <div class="chat-meta">
+            <h3>НБН Помощник</h3>
+            <p>Переводы, поиск, документы</p>
+          </div>
+        </div>
+        <div class="chat-item">
+          <div class="chat-avatar">PR</div>
+          <div class="chat-meta">
+            <h3>Продуктовая команда</h3>
+            <p>Новая визуальная концепция</p>
+          </div>
+        </div>
+        <div class="chat-item">
+          <div class="chat-avatar">AI</div>
+          <div class="chat-meta">
+            <h3>AI Labs</h3>
+            <p>Генерация и заметки</p>
+          </div>
+        </div>
+      </section>
+      <div class="sidebar-actions">
+        <button class="primary-btn" onclick="switchAccount()">Создать канал</button>
+        <button class="ghost-btn" onclick="switchAccount()">Новый чат</button>
+      </div>
+      <div class="footer">by mitrsht © 2025</div>
+    </aside>
+    <main class="main">
+      <div class="header">
+        <div>
+          <h2>NBN Message</h2>
+          <span>Премиальный чат в стиле Telegram — быстрее и умнее</span>
+        </div>
+        <button class="ghost-btn" onclick="toggleMenu()">Инструменты</button>
+      </div>
+      <section class="messages" id="messages">
+        <div class="date-pill">Сегодня</div>
+        <div class="bubble meta">NBN Message — перевод: <strong>Next Business Network</strong>.</div>
+        <div class="bubble">Здравствуйте! Чем помочь сегодня?</div>
+        <div class="bubble user">
+          Нужен самый крутой мессенджер — визуально и по функциям.
+          <div class="tag">Вы</div>
+        </div>
+        <div class="bubble">
+          Принял! Добавил премиальный интерфейс, быстрые инструменты и фокус на бизнес-чатах.
+        </div>
+      </section>
+      <div class="composer">
+        <div class="quick-stats">
+          <div class="stat-card"><strong>4.8 сек</strong>среднее время ответа</div>
+          <div class="stat-card"><strong>128</strong>активных команд</div>
+          <div class="stat-card"><strong>99.9%</strong>аптайм сети</div>
+        </div>
+        <div id="menu" class="menu">
+          <button onclick="generateImage()">Картинка</button>
+          <button onclick="generateRecipe()">Рецепт + ккал</button>
+          <button onclick="googleSearch()">Поиск</button>
+          <button onclick="solveMath()">Математика</button>
+          <button onclick="makePresentation()">PPTX</button>
+          <button onclick="document.getElementById('fileInput').click()">Файл</button>
+          <button onclick="voiceInput()">Голос</button>
+          <button onclick="randomFact()">Факт</button>
+          <button onclick="switchAccount()">Аккаунты</button>
+        </div>
+        <div class="composer-bar">
+          <button class="icon-btn" onclick="toggleMenu()">＋</button>
+          <input type="text" id="query" placeholder="Напишите сообщение или задайте вопрос..." />
+          <button class="send-btn" onclick="sendQuery()">Отправить</button>
+        </div>
+      </div>
+    </main>
   </div>
-
-  <div id="menu" class="menu">
-    <button onclick="generateImage()">Картинка</button>
-    <button onclick="generateRecipe()">Рецепт + ккал</button>
-    <button onclick="googleSearch()">Поиск Google</button>
-    <button onclick="solveMath()">Математика</button>
-    <button onclick="makePresentation()">Презентация PPTX</button>
-    <button onclick="document.getElementById('fileInput').click()">Фото/Документ</button>
-    <button onclick="voiceInput()">Голос</button>
-    <button onclick="randomFact()">Случайный факт</button>
-    <button onclick="switchAccount()">Сменить аккаунт</button>
-  </div>
-
-  <a href="mailto:mishkir2013@gmail.com" class="support">Поддержка</a>
-  <div class="footer">by mitrsht © 2025</div>
   <input type="file" id="fileInput" style="display:none" onchange="handleFile(this.files)">
 
   <script>
-    Telegram.WebApp.ready(); Telegram.WebApp.expand();
+    if (window.Telegram?.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+    }
 
     const TAVILY_KEY = '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';
     const HF_TOKEN = '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';
 
-    // 3D кубики за мышкой
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = innerWidth; canvas.height = innerHeight;
-    let mx = 0, my = 0;
-    document.onmousemove = e => { mx = e.clientX; my = e.clientY; };
-    const cubes = [];
-    for(let i=0;i<150;i++) cubes.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,size:10+Math.random()*20});
-    function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);cubes.forEach(c=>{const dx=mx-c.x,dy=my-c.y;c.x+=dx*0.02;c.y+=dy*0.02;ctx.fillStyle='#ff6b35';ctx.fillRect(c.x,c.y,c.size,c.size)});requestAnimationFrame(draw);}
-    draw();
+    const messages = document.getElementById('messages');
 
-    function show(html){document.getElementById('result').innerHTML=html;document.getElementById('result').style.display='block';}
-    function toggleMenu(){document.getElementById('menu').style.display=document.getElementById('menu').style.display==='block'?'none':'block';}
+    function appendMessage(text, type = 'bot') {
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${type === 'user' ? 'user' : ''}`;
+      bubble.innerHTML = text;
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function show(html) {
+      appendMessage(html, 'bot');
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById('menu');
+      menu.style.display = menu.style.display === 'grid' ? 'none' : 'grid';
+    }
+
+    let lastQuery = '';
+
+    function getQueryValue() {
+      const current = document.getElementById('query').value.trim();
+      return current || lastQuery || '';
+    }
+
+    function sendQuery() {
+      const input = document.getElementById('query');
+      const value = input.value.trim();
+      if (!value) return;
+      lastQuery = value;
+      appendMessage(value, 'user');
+      input.value = '';
+      googleSearch();
+    }
 
     // КАРТИНКА
-    async function generateImage(){const p=document.getElementById('query').value||'кот';show('Генерирую...');const r=await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',{method:'POST',headers:{'Authorization':`Bearer ${HF_TOKEN}`},body:JSON.stringify({inputs:p})});const b=await r.blob();const u=URL.createObjectURL(b);show(`<img src="${u}" style="max-width:100%;border-radius:16px">`);}
+    async function generateImage(){const p=getQueryValue()||'кот';show('Генерирую...');const r=await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',{method:'POST',headers:{'Authorization':`Bearer ${HF_TOKEN}`},body:JSON.stringify({inputs:p})});const b=await r.blob();const u=URL.createObjectURL(b);show(`<img src="${u}" style="max-width:100%;border-radius:16px">`);}
 
     // РЕЦЕПТ
-    async function generateRecipe(){const q=document.getElementById('query').value||'ужин';show('Готовлю рецепт...');const r=await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-32B-Instruct',{method:'POST',headers:{'Authorization':`Bearer ${HF_TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({inputs:`Рецепт ${q} с калориями, живой язык`})});const d=await r.json();show(d[0]?.generated_text||'Готово!');}
+    async function generateRecipe(){const q=getQueryValue()||'ужин';show('Готовлю рецепт...');const r=await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-32B-Instruct',{method:'POST',headers:{'Authorization':`Bearer ${HF_TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({inputs:`Рецепт ${q} с калориями, живой язык`})});const d=await r.json();show(d[0]?.generated_text||'Готово!');}
 
     // ПОИСК GOOGLE
-    async function googleSearch(){const q=document.getElementById('query').value||'что-то';show('Ищу...');const r=await fetch('https://api.tavily.com/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:TAVILY_KEY,query:q,include_answer:true})});const d=await r.json();show(d.answer||'Не нашёл');}
+    async function googleSearch(){const q=getQueryValue()||'что-то';show('Ищу...');const r=await fetch('https://api.tavily.com/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:TAVILY_KEY,query:q,include_answer:true})});const d=await r.json();show(d.answer||'Не нашёл');}
 
     // МАТЕМАТИКА
-    async function solveMath(){const q=document.getElementById('query').value||'2+2';show('Решаю...');const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.min.js';s.onload=()=>{try{show(`Ответ: ${math.evaluate(q)}`)}catch{show('Не решил')}};document.head.appendChild(s);}
+    async function solveMath(){const q=getQueryValue()||'2+2';show('Решаю...');const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.min.js';s.onload=()=>{try{show(`Ответ: ${math.evaluate(q)}`)}catch{show('Не решил')}};document.head.appendChild(s);}
 
     // ПРЕЗЕНТАЦИЯ PPTX
-    async function makePresentation(){const q=document.getElementById('query').value||'тема';show('Создаю PPTX...');const pptx=new PptxGenJS();let slide=pptx.addSlide();slide.addText(q,{x:1,y:1,fontSize:36,color:"ff6b35"});pptx.writeFile({fileName:`${q}.pptx`});setTimeout(()=>show('Скачивается!'),2000);}
+    async function makePresentation(){const q=getQueryValue()||'тема';show('Создаю PPTX...');const pptx=new PptxGenJS();let slide=pptx.addSlide();slide.addText(q,{x:1,y:1,fontSize:36,color:"ff6b35"});pptx.writeFile({fileName:`${q}.pptx`});setTimeout(()=>show('Скачивается!'),2000);}
 
     // ГОЛОС
-    function voiceInput(){const r=new (window.SpeechRecognition||window.webkitSpeechRecognition)();r.lang='ru-RU';r.onresult=e=>document.getElementById('query').value=e.results[0][0].transcript;r.start();}
+    function voiceInput(){const r=new (window.SpeechRecognition||window.webkitSpeechRecognition)();r.lang='ru-RU';r.onresult=e=>{document.getElementById('query').value=e.results[0][0].transcript;lastQuery=e.results[0][0].transcript;};r.start();}
 
     // ФАКТ
     function randomFact(){const f=['Земля вращается 1670 км/ч','У осьминога 3 сердца','Вода расширяется при замерзании'];show(f[Math.floor(Math.random()*f.length)]);}
